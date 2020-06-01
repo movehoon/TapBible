@@ -4,15 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-//public class BibleVerse
-//{
-//    public int book;
-//    public int chapter;
-//    public int verse;
-//    public string line;
-//    public string[] words;
-//}
-
 public class Verse
 {
     public string[] words;
@@ -45,7 +36,6 @@ public class Program : MonoBehaviour
 
     Bible bible;
 
-    //List<BibleVerse> bibleVerse = new List<BibleVerse>();
     int[] count = new int[50];
 
     int p_book = 0;
@@ -268,53 +258,43 @@ public class Program : MonoBehaviour
         return null;
     }
 
-    string[] Shuffle(string[] strArray, string answer, int answer_index)
-    {
-        List<string> result = new List<string>();
-        List<string> input = new List<string>();
-        foreach (string str in strArray)
-        {
-            if (str != answer)
-            {
-                input.Add(str);
-            }
-        }
-        //Debug.Log("input count: " + input.Count.ToString());
-        for (int i=0; i<4; i++)
-        {
-            if (i == answer_index)
-            {
-                result.Add(answer);
-            }
-            else
-            {
-                int pick = new System.Random().Next(input.Count);
-                result.Add(input[pick]);
-                input.RemoveAt(pick);
-            }
-        }
-        return result.ToArray();
-    }
-
     void RefreshButton()
     {
         try
         {
             text_book.text = "창세기 " + (p_chapter + 1).ToString() + ":" + (p_verse + 1).ToString();
             string[] words = Get4Words(p_book, p_chapter, p_verse, p_word);
-            string answer = bible.books[p_book].chapters[p_chapter].verses[p_verse].words[p_word];
-            int answer_index = new System.Random().Next(4);
-            for (int i = 0; i < 4; i++)
+            List<string> rest_words = new List<string>();
+            int nRand = new System.Random().Next(2);
+            if (nRand > 0)
             {
-                if (buttonAnswers[i].GetComponentInChildren<Text>().text == answer)
-                {
-                    answer_index = i;
-                }
+                rest_words.Add(words[2]);
+                rest_words.Add(words[3]);
+                rest_words.Add(words[0]);
+                rest_words.Add(words[1]);
             }
-            string[] shuffled = Shuffle(words, answer, answer_index);
+            else
+            {
+                rest_words.Add(words[3]);
+                rest_words.Add(words[2]);
+                rest_words.Add(words[0]);
+                rest_words.Add(words[1]);
+            }
             for (int i = 0; i < 4; i++)
             {
-                buttonAnswers[i].GetComponentInChildren<Text>().text = shuffled[i];
+                if (buttonAnswers[i].GetComponentInChildren<Text>().text == words[0])
+                {
+                    continue;
+                }
+                else if (buttonAnswers[i].GetComponentInChildren<Text>().text == words[1])
+                {
+                    continue;
+                }
+                else
+                {
+                    buttonAnswers[i].GetComponentInChildren<Text>().text = rest_words[0];
+                    rest_words.RemoveAt(0);
+                }
             }
             if_test.text = string.Join(" ", bible.books[p_book].chapters[p_chapter].verses[p_verse].words);
         }
@@ -395,14 +375,6 @@ public class Program : MonoBehaviour
                 verse.words = line.Substring(sep + 1).Split(' ');
                 Debug.Log("Verse: " + verse.words[0]);
                 chapter.verses.Add(verse);
-
-
-
-                //bv.line = line.Substring(sep + 1);
-                //bv.words = bv.line.Split(' ');
-                //Debug.Log(bv.book.ToString() + "+" + bv.chapter.ToString() + "+" + bv.verse.ToString() + "+" + bv.line);
-                //count[bv.chapter] = bv.verse;
-                //bibleVerse.Add(bv);
             }
             else
             {
