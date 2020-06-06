@@ -3,6 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using SQLite4Unity3d;
+#if !UNITY_EDITOR
+using System.IO;
+#endif
 
 public class Verse
 {
@@ -35,6 +39,7 @@ public class Program : MonoBehaviour
     public Button[] buttonAnswers;
 
     Bible bible;
+    private SQLiteConnection _connection;
 
     int[] count = new int[50];
 
@@ -280,15 +285,16 @@ public class Program : MonoBehaviour
                 rest_words.Add(words[0]);
                 rest_words.Add(words[1]);
             }
+            Debug.Log("Words: " + string.Join(", ", rest_words));
             for (int i = 0; i < 4; i++)
             {
                 if (buttonAnswers[i].GetComponentInChildren<Text>().text == words[0])
                 {
-                    continue;
+                    rest_words.Remove(words[0]);
                 }
                 else if (buttonAnswers[i].GetComponentInChildren<Text>().text == words[1])
                 {
-                    continue;
+                    rest_words.Remove(words[1]);
                 }
                 else
                 {
@@ -328,12 +334,97 @@ public class Program : MonoBehaviour
         }
     }
 
+    void LoadDatabase(string DatabaseName)
+    {
+
+#if UNITY_EDITOR
+            var dbPath = string.Format(@"Assets/StreamingAssets/{0}", DatabaseName);
+#else
+        // check if file exists in Application.persistentDataPath
+        var filepath = string.Format("{0}/{1}", Application.persistentDataPath, DatabaseName);
+
+        if (!File.Exists(filepath))
+        {
+            Debug.Log("Database not in Persistent path");
+            // if it doesn't ->
+            // open StreamingAssets directory and load the db ->
+
+#if UNITY_ANDROID 
+            var loadDb = new WWW("jar:file://" + Application.dataPath + "!/assets/" + DatabaseName);  // this is the path to your StreamingAssets in android
+            while (!loadDb.isDone) { }  // CAREFUL here, for safety reasons you shouldn't let this while loop unattended, place a timer and error check
+            // then save to Application.persistentDataPath
+            File.WriteAllBytes(filepath, loadDb.bytes);
+#elif UNITY_IOS
+                 var loadDb = Application.dataPath + "/Raw/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
+                // then save to Application.persistentDataPath
+                File.Copy(loadDb, filepath);
+#elif UNITY_WP8
+                var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
+                // then save to Application.persistentDataPath
+                File.Copy(loadDb, filepath);
+
+#elif UNITY_WINRT
+        var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
+        // then save to Application.persistentDataPath
+        File.Copy(loadDb, filepath);
+        
+#elif UNITY_STANDALONE_OSX
+        var loadDb = Application.dataPath + "/Resources/Data/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
+        // then save to Application.persistentDataPath
+        File.Copy(loadDb, filepath);
+#else
+    var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
+    // then save to Application.persistentDataPath
+    File.Copy(loadDb, filepath);
+
+#endif
+
+            Debug.Log("Database written");
+        }
+
+        var dbPath = filepath;
+#endif
+            _connection = new SQLiteConnection(dbPath, SQLiteOpenFlags.ReadOnly);
+            Debug.Log("Final PATH: " + dbPath);
+        Debug.Log("Connection: " + _connection.ToString());
+
+    }
+
+    class bible_korHRV
+    {
+        public int book;
+        public int chapter;
+        public int verse;
+        public string content;
+    }
+
+    IEnumerable<bible_korHRV> GetLines()
+    {
+        return _connection.Table<bible_korHRV>();
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        LoadDatabase("hrv.db");
+        //Debug.Log(_connection.GetTableInfo("bible_korHRV").Count);
+
+        //IEnumerable<bible_korHRV> lines = GetLines();
+        //Debug.Log("lines:" + lines.ToString());
+        //foreach (bible_korHRV line in lines)
+        //{
+        //    Debug.Log(line.book.ToString() + line.chapter.ToString() + line.verse.ToString() + line.content);
+        //}
+        //Debug.Log(_connection.Table<bible_korHRV>().Where(x => x.book == 2).FirstOrDefault().content);
+
         p_book = PlayerPrefs.GetInt(KEY_BOOK, 0);
         p_chapter = PlayerPrefs.GetInt(KEY_CHAPTER, 0);
         p_verse = PlayerPrefs.GetInt(KEY_VERSE, 0);
+
+        //p_book = 0;
+        //p_chapter = 5;
+        //p_verse = 17;
+
 
         TextAsset file = Resources.Load<TextAsset>("Bible/1genesis");
         Debug.Log(file.name);
