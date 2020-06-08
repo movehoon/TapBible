@@ -1,29 +1,12 @@
-﻿using System;
+﻿using SQLite4Unity3d;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using SQLite4Unity3d;
 #if !UNITY_EDITOR
 using System.IO;
 #endif
-
-public class Verse
-{
-    public string[] words;
-}
-public class Chapter
-{
-    public List<Verse> verses;
-}
-public class Book
-{
-    public List<Chapter> chapters;
-}
-public class Bible
-{
-    public List<Book> books;
-}
 
 public class Program : MonoBehaviour
 {
@@ -38,14 +21,14 @@ public class Program : MonoBehaviour
     public InputField if_answer;
     public Button[] buttonAnswers;
 
-    Bible bible;
+    //Bible bible;
     private SQLiteConnection _connection;
 
     int[] count = new int[50];
 
     int p_book = 0;
     int p_chapter = 0;
-    int p_verse = 30;
+    int p_verse = 0;
     int p_word = 0;
 
     DateTime btnBlink;
@@ -129,8 +112,10 @@ public class Program : MonoBehaviour
     {
         try
         {
-            if (word == bible.books[p_book].chapters[p_chapter].verses[p_verse].words[p_word])
+            //Debug.Log("Compare " + word + GetContent(p_book, p_chapter, p_verse));
+            if (word == GetContentWord(p_book, p_chapter, p_verse, p_word))
             {
+                Debug.Log("Correct");
                 if (NextWord())
                 {
                     if_answer.text += word + " ";
@@ -154,18 +139,6 @@ public class Program : MonoBehaviour
         return false;
     }
 
-    //BibleVerse GetVerseInfo(int b, int c, int v)
-    //{
-    //    foreach (BibleVerse bv in bibleVerse)
-    //    {
-    //        if (bv.book == b && bv.chapter == c && bv.verse == v)
-    //        {
-    //            return bv;
-    //        }
-    //    }
-    //    return null;
-    //}
-
     bool NextWord()
     {
         p_word = p_word + 1;
@@ -174,39 +147,39 @@ public class Program : MonoBehaviour
         //Debug.Log("V_Count:" + bible.books[p_book].chapters[p_chapter].verses.Count);
         //Debug.Log("W_Count:" + bible.books[p_book].chapters[p_chapter].verses[p_verse].words.Length);
         //Debug.Log("B: " + p_book + ", C: " + p_chapter + ", V: " + p_verse + ", W: " + p_word);
-        if (p_word >= bible.books[p_book].chapters[p_chapter].verses[p_verse].words.Length)
+        if (p_word >= GetContentWords(p_book, p_chapter, p_verse).Length)
         {
-            NextVerse();
             p_word = 0;
+            NextVerse();
             return false;
         }
         return true;
     }
     void NextVerse()
     {
-        //Debug.Log("NextVerse");
+        Debug.Log("NextVerse");
         p_verse = p_verse + 1;
-        if (p_verse >= bible.books[p_book].chapters[p_chapter].verses.Count)
+        if (GetContent(p_book, p_chapter, p_verse) == "")
         {
-            NextChapter();
             p_verse = 0;
+            NextChapter();
         }
     }
     void NextChapter()
     {
-        //Debug.Log("NextChapter");
-        p_chapter = p_chapter +1;
-        if (p_chapter >= bible.books[p_book].chapters.Count)
+        Debug.Log("NextChapter");
+        p_chapter = p_chapter + 1;
+        if (GetContent(p_book, p_chapter, p_verse) == "")
         {
             // NextBook
-            NextBook();
             p_chapter = 0;
+            NextBook();
         }
     }
     void NextBook()
     {
         p_book = p_book + 1;
-        if (p_book >= bible.books.Count)
+        if (GetContent(p_book, p_chapter, p_verse) == "")
         {
             p_book = 0;
         }
@@ -226,41 +199,33 @@ public class Program : MonoBehaviour
     string GetNextNthWord(int b, int c, int v, int w, int n)
     {
         string result = "";
-        if (w+n < bible.books[b].chapters[c].verses[v].words.Length)
+        if (w+n < GetContentWords(b, c, v).Length)
         {
-            result = bible.books[b].chapters[c].verses[v].words[w + n];
+            result = GetContentWords(b, c, v)[w + n];
         }
         else
         {
-            w = (w + n) - bible.books[b].chapters[c].verses[v].words.Length;
+            w = (w + n) - GetContentWords(b, c, v).Length;
             v++;
-            if (v >= bible.books[b].chapters[c].verses.Count)
+            if (GetContent(b, c, v) == "")
             {
-                v = 0;
+                v = 1;
                 c++;
-                if (c >= bible.books[b].chapters.Count)
+                if (GetContent(b, c, v) == "")
                 {
-                    c = 0;
+                    c = 1;
                     b++;
+                    if (b > 66)
+                    {
+                        b = 1;
+                        c = 1;
+                        v = 1;
+                    }
                 }
             }
-            result = bible.books[b].chapters[c].verses[v].words[w];
+            result = GetContentWord(b, c, v, w);
         }
         return result;
-    }
-
-    string GetWord(int b, int c, int v, int w)
-    {
-        //Debug.Log("GetWord: " + c.ToString() + v.ToString() + w.ToString());
-        try
-        {
-            return bible.books[b].chapters[c].verses[v].words[w];
-        }
-        catch (Exception e)
-        {
-            Debug.LogException(e, this);
-        }
-        return null;
     }
 
     void RefreshButton()
@@ -269,6 +234,7 @@ public class Program : MonoBehaviour
         {
             text_book.text = "창세기 " + (p_chapter + 1).ToString() + ":" + (p_verse + 1).ToString();
             string[] words = Get4Words(p_book, p_chapter, p_verse, p_word);
+
             List<string> rest_words = new List<string>();
             int nRand = new System.Random().Next(2);
             if (nRand > 0)
@@ -302,7 +268,7 @@ public class Program : MonoBehaviour
                     rest_words.RemoveAt(0);
                 }
             }
-            if_test.text = string.Join(" ", bible.books[p_book].chapters[p_chapter].verses[p_verse].words);
+            if_test.text = GetContent(p_book, p_chapter, p_verse);
         }
         catch (Exception e)
         {
@@ -337,157 +303,87 @@ public class Program : MonoBehaviour
     void LoadDatabase(string DatabaseName)
     {
 
-#if UNITY_EDITOR
-            var dbPath = string.Format(@"Assets/StreamingAssets/{0}", DatabaseName);
-#else
-        // check if file exists in Application.persistentDataPath
-        var filepath = string.Format("{0}/{1}", Application.persistentDataPath, DatabaseName);
-
-        if (!File.Exists(filepath))
+        var dbPath = string.Format(@"Assets/StreamingAssets/{0}", DatabaseName);
+        try
         {
-            Debug.Log("Database not in Persistent path");
-            // if it doesn't ->
-            // open StreamingAssets directory and load the db ->
-
-#if UNITY_ANDROID 
-            var loadDb = new WWW("jar:file://" + Application.dataPath + "!/assets/" + DatabaseName);  // this is the path to your StreamingAssets in android
-            while (!loadDb.isDone) { }  // CAREFUL here, for safety reasons you shouldn't let this while loop unattended, place a timer and error check
-            // then save to Application.persistentDataPath
-            File.WriteAllBytes(filepath, loadDb.bytes);
-#elif UNITY_IOS
-                 var loadDb = Application.dataPath + "/Raw/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
-                // then save to Application.persistentDataPath
-                File.Copy(loadDb, filepath);
-#elif UNITY_WP8
-                var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
-                // then save to Application.persistentDataPath
-                File.Copy(loadDb, filepath);
-
-#elif UNITY_WINRT
-        var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
-        // then save to Application.persistentDataPath
-        File.Copy(loadDb, filepath);
-        
-#elif UNITY_STANDALONE_OSX
-        var loadDb = Application.dataPath + "/Resources/Data/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
-        // then save to Application.persistentDataPath
-        File.Copy(loadDb, filepath);
-#else
-    var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
-    // then save to Application.persistentDataPath
-    File.Copy(loadDb, filepath);
-
-#endif
-
-            Debug.Log("Database written");
-        }
-
-        var dbPath = filepath;
-#endif
             _connection = new SQLiteConnection(dbPath, SQLiteOpenFlags.ReadOnly);
             Debug.Log("Final PATH: " + dbPath);
-        Debug.Log("Connection: " + _connection.ToString());
+            Debug.Log("Connection: " + _connection.ToString());
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+        }
 
     }
 
-    class bible_korHRV
+    public class Bible_korHRV
     {
-        public int book;
-        public int chapter;
-        public int verse;
-        public string content;
+        [PrimaryKey, AutoIncrement]
+        public int book { get; set; }
+        public int chapter { get; set; }
+        public int verse { get; set; }
+        public string content { get; set; }
     }
 
-    IEnumerable<bible_korHRV> GetLines()
+
+    string GetContent(int nBook, int nChapter, int nVerse)
     {
-        return _connection.Table<bible_korHRV>();
+        nBook += 1;
+        nChapter += 1;
+        nVerse += 1;
+        string result = "";
+        try
+        {
+            Debug.Log(string.Format("GetContent: {0} {1} {2}", nBook, nChapter, nVerse));
+            Bible_korHRV b = _connection.Table<Bible_korHRV>().Where(x => x.book == nBook && x.chapter == nChapter && x.verse == nVerse).First();
+            result = b.content;
+        }
+        catch(Exception e)
+        {
+            Debug.Log(e);
+        }
+        return result;
     }
+
+    string[] GetContentWords(int nBook, int nChapter, int nVerse)
+    {
+        string content = GetContent(nBook, nChapter, nVerse);
+        if (content.Length > 0)
+        {
+            return content.Split(' ');
+        }
+        return new string[] { "", "", "", "" };
+    }
+
+    string GetContentWord(int nBook, int nChapter, int nVerse, int nWord)
+    {
+        string content = GetContent(nBook, nChapter, nVerse);
+        if (content.Length > 0)
+        {
+            return content.Split(' ')[nWord];
+        }
+        return "";
+    }
+
+    const string TABLE_NAME = "bible_korHRV";
 
     // Start is called before the first frame update
     void Start()
     {
-        LoadDatabase("hrv.db");
-        //Debug.Log(_connection.GetTableInfo("bible_korHRV").Count);
-
-        //IEnumerable<bible_korHRV> lines = GetLines();
-        //Debug.Log("lines:" + lines.ToString());
-        //foreach (bible_korHRV line in lines)
-        //{
-        //    Debug.Log(line.book.ToString() + line.chapter.ToString() + line.verse.ToString() + line.content);
-        //}
-        //Debug.Log(_connection.Table<bible_korHRV>().Where(x => x.book == 2).FirstOrDefault().content);
+        LoadDatabase("korHRV.db");
 
         p_book = PlayerPrefs.GetInt(KEY_BOOK, 0);
         p_chapter = PlayerPrefs.GetInt(KEY_CHAPTER, 0);
         p_verse = PlayerPrefs.GetInt(KEY_VERSE, 0);
 
         //p_book = 0;
-        //p_chapter = 5;
-        //p_verse = 17;
+        //p_chapter = 49;
+        //p_verse = 25;
 
-
-        TextAsset file = Resources.Load<TextAsset>("Bible/1genesis");
-        Debug.Log(file.name);
-        //Debug.Log(file.text);
-
-        bible = new Bible();
-        bible.books = new List<Book>();
-        Book book = new Book();
-        book.chapters = new List<Chapter>();
-
-        var lines = file.text.Split('\n');
-        int c = -1;
-        Chapter chapter = new Chapter();
-        chapter.verses = new List<Verse>();
-        foreach (var line in lines)
-        {
-            Debug.Log("LINE: " + line);
-            int sep = line.IndexOf(' ');
-            if (sep > 1)
-            {
-                string info = line.Substring(0, sep);
-                string ch = info.Split(':')[0];
-                string ve = info.Split(':')[1];
-                int iCh = int.Parse(ch) - 1;
-                int iVe = int.Parse(ve) - 1;
-
-                if (c != iCh)
-                {
-                    if (c != -1)
-                    {
-                        book.chapters.Add(chapter);
-                        chapter = new Chapter();
-                        chapter.verses = new List<Verse>();
-                    }
-                    c = iCh;
-                }
-
-                Verse verse = new Verse();
-                verse.words = line.Substring(sep + 1).Split(' ');
-                Debug.Log("Verse: " + verse.words[0]);
-                chapter.verses.Add(verse);
-            }
-            else
-            {
-                Debug.Log("Err");
-            }
-        }
-        bible.books.Add(book);
-        foreach(Book _book in bible.books)
-        {
-            //Debug.Log("C: " + _book.chapters.ToString());
-            foreach (Chapter _chapter in _book.chapters)
-            {
-                //Debug.Log("V: " + _chapter.verses.Count.ToString());
-                foreach(Verse verse in chapter.verses)
-                {
-                    //Debug.Log("W: " + verse.words.Length.ToString());
-                }
-            }
-        }
         RefreshButton();
 
-        //StartCoroutine("TestButton");
+        StartCoroutine("TestButton");
     }
 
     // Update is called once per frame
