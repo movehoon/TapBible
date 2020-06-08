@@ -235,7 +235,7 @@ public class Program : MonoBehaviour
     {
         try
         {
-            text_book.text = "창세기 " + (p_chapter + 1).ToString() + ":" + (p_verse + 1).ToString();
+            text_book.text = BIBLE_DEF.BOOK_NAME[p_book] + " " + (p_chapter + 1).ToString() + ":" + (p_verse + 1).ToString();
             string[] words = Get4Words(p_book, p_chapter, p_verse, p_word);
 
             List<string> rest_words = new List<string>();
@@ -254,16 +254,18 @@ public class Program : MonoBehaviour
                 rest_words.Add(words[0]);
                 rest_words.Add(words[1]);
             }
-            Debug.Log("Words: " + string.Join(", ", rest_words));
             for (int i = 0; i < 4; i++)
             {
+                Debug.Log(string.Format("{0} Words: {1}", i, string.Join(", ", rest_words)));
                 if (buttonAnswers[i].GetComponentInChildren<Text>().text == words[0])
                 {
                     rest_words.Remove(words[0]);
+                    words[0] = "";
                 }
                 else if (buttonAnswers[i].GetComponentInChildren<Text>().text == words[1])
                 {
                     rest_words.Remove(words[1]);
+                    words[1] = "";
                 }
                 else
                 {
@@ -398,7 +400,7 @@ public class Program : MonoBehaviour
         string result = "";
         try
         {
-            Debug.Log(string.Format("GetContent: {0} {1} {2}", nBook, nChapter, nVerse));
+            //Debug.Log(string.Format("GetContent: {0} {1} {2}", nBook, nChapter, nVerse));
             Bible_korHRV b = _connection.Table<Bible_korHRV>().Where(x => x.book == nBook && x.chapter == nChapter && x.verse == nVerse).First();
             result = b.content;
         }
@@ -444,7 +446,7 @@ public class Program : MonoBehaviour
 
         RefreshButton();
 
-        StartCoroutine("TestButton");
+        //StartCoroutine("TestButton");
     }
 
     // Update is called once per frame
