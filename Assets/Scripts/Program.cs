@@ -4,15 +4,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-#if !UNITY_EDITOR
 using System.IO;
-#endif
+//#if !UNITY_EDITOR
+//#endif
 
 public class Program : MonoBehaviour
 {
     const string KEY_BOOK = "KEY_BOOK";
     const string KEY_CHAPTER = "KEY_CHAPTER";
     const string KEY_VERSE = "KEY_VERSE";
+
+    const string DB_NAME = "korHRV.db";
+    const string TABLE_NAME = "bible_korHRV";
 
     public AudioSource audioSource;
 
@@ -300,22 +303,82 @@ public class Program : MonoBehaviour
         }
     }
 
-    void LoadDatabase(string DatabaseName)
+    //void LoadDatabase(string DatabaseName)
+    //{
+
+    //    var dbPath = string.Format(@"Assets/StreamingAssets/{0}", DatabaseName);
+    //    if (!File.Exists(dbPath))
+    //    {
+    //        dbPath = string.Format("{0}/{1}", Application.persistentDataPath, DatabaseName);
+    //    }
+    //    //string dbPath = "file://" + Application.streamingAssetsPath + "/" + DatabaseName;
+    //    try
+    //    {
+    //        _connection = new SQLiteConnection(dbPath, SQLiteOpenFlags.ReadOnly);
+    //        Debug.Log("Final PATH: " + dbPath);
+    //        Debug.Log("Connection: " + _connection.ToString());
+    //    }
+    //    catch (Exception e)
+    //    {
+    //        Debug.Log(e);
+    //    }
+    //}
+
+    public void DataService(string DatabaseName)
     {
 
+#if UNITY_EDITOR
         var dbPath = string.Format(@"Assets/StreamingAssets/{0}", DatabaseName);
-        try
+#else
+        // check if file exists in Application.persistentDataPath
+        var filepath = string.Format("{0}/{1}", Application.persistentDataPath, DatabaseName);
+
+        if (!File.Exists(filepath))
         {
-            _connection = new SQLiteConnection(dbPath, SQLiteOpenFlags.ReadOnly);
-            Debug.Log("Final PATH: " + dbPath);
-            Debug.Log("Connection: " + _connection.ToString());
-        }
-        catch (Exception e)
-        {
-            Debug.Log(e);
+            Debug.Log("Database not in Persistent path");
+            // if it doesn't ->
+            // open StreamingAssets directory and load the db ->
+
+#if UNITY_ANDROID
+            var loadDb = new WWW("jar:file://" + Application.dataPath + "!/assets/" + DatabaseName);  // this is the path to your StreamingAssets in android
+            while (!loadDb.isDone) { }  // CAREFUL here, for safety reasons you shouldn't let this while loop unattended, place a timer and error check
+            // then save to Application.persistentDataPath
+            File.WriteAllBytes(filepath, loadDb.bytes);
+#elif UNITY_IOS
+                 var loadDb = Application.dataPath + "/Raw/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
+                // then save to Application.persistentDataPath
+                File.Copy(loadDb, filepath);
+#elif UNITY_WP8
+                var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
+                // then save to Application.persistentDataPath
+                File.Copy(loadDb, filepath);
+
+#elif UNITY_WINRT
+        var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
+        // then save to Application.persistentDataPath
+        File.Copy(loadDb, filepath);
+        
+#elif UNITY_STANDALONE_OSX
+        var loadDb = Application.dataPath + "/Resources/Data/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
+        // then save to Application.persistentDataPath
+        File.Copy(loadDb, filepath);
+#else
+    var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
+    // then save to Application.persistentDataPath
+    File.Copy(loadDb, filepath);
+
+#endif
+
+            Debug.Log("Database written");
         }
 
+        var dbPath = filepath;
+#endif
+        _connection = new SQLiteConnection(dbPath, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
+        Debug.Log("Final PATH: " + dbPath);
+
     }
+
 
     public class Bible_korHRV
     {
@@ -366,20 +429,18 @@ public class Program : MonoBehaviour
         return "";
     }
 
-    const string TABLE_NAME = "bible_korHRV";
-
     // Start is called before the first frame update
     void Start()
     {
-        LoadDatabase("korHRV.db");
+        DataService(DB_NAME);
 
         p_book = PlayerPrefs.GetInt(KEY_BOOK, 0);
         p_chapter = PlayerPrefs.GetInt(KEY_CHAPTER, 0);
         p_verse = PlayerPrefs.GetInt(KEY_VERSE, 0);
 
-        //p_book = 0;
-        //p_chapter = 49;
-        //p_verse = 25;
+        p_book = 0;
+        p_chapter = 7;
+        p_verse = 14;
 
         RefreshButton();
 
@@ -391,7 +452,7 @@ public class Program : MonoBehaviour
     {
         TimeSpan timeSpan = System.DateTime.Now - btnBlink;
         //Debug.Log(timeSpan.TotalMilliseconds);
-        if (timeSpan.TotalMilliseconds > 200)
+        if (timeSpan.TotalMilliseconds > 100)
         {
             for (int i = 0; i < 4; i++)
             {
