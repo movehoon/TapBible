@@ -436,13 +436,13 @@ public class Program : MonoBehaviour
     {
         DataService(DB_NAME);
 
-        p_book = PlayerPrefs.GetInt(KEY_BOOK, 0);
+        p_book = PlayerPrefs.GetInt(KEY_BOOK, 18);
         p_chapter = PlayerPrefs.GetInt(KEY_CHAPTER, 0);
         p_verse = PlayerPrefs.GetInt(KEY_VERSE, 0);
 
-        p_book = 0;
-        p_chapter = 7;
-        p_verse = 14;
+        p_book = 18;
+        //p_chapter = 0;
+        //p_verse = 0;
 
         RefreshButton();
 
