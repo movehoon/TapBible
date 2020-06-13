@@ -23,6 +23,8 @@ public class Program : MonoBehaviour
     public InputField if_test;
     public InputField if_answer;
     public Button[] buttonAnswers;
+    public Transform panelBooks;
+    public GameObject buttonBook;
 
     //Bible bible;
     private SQLiteConnection _connection;
@@ -57,6 +59,64 @@ public class Program : MonoBehaviour
         audioSource.clip = audioClip;
         audioSource.Play();
         yield return null;
+    }
+
+    void StoreBibleData()
+    {
+        PlayerPrefs.SetInt(KEY_BOOK, p_book);
+        PlayerPrefs.SetInt(KEY_CHAPTER, p_chapter);
+        PlayerPrefs.SetInt(KEY_VERSE, p_verse);
+    }
+
+    int GetBookIndex(string book_name)
+    {
+        for (int i=0; i<66; i++)
+        {
+            if (BIBLE_DEF.BOOK_NAME[i] == book_name)
+            {
+                return i;
+            }
+            if (BIBLE_DEF.BOOK_NAME_SHORT[i] == book_name)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    void SelectBook(Button button)
+    {
+        StoreBibleData();
+        string book_name = button.GetComponentInChildren<Text>().text;
+        Debug.Log("SelectBook" + book_name + GetBookIndex(book_name));
+        panelBooks.gameObject.SetActive(false);
+    }
+
+    void MakeBookButtons()
+    {
+        int x_origin = -240;
+        int y_origin = 540;
+        int x_step = 100;
+        int y_step = -100;
+        Debug.Log("MakeBookButtons");
+        int nBook = 0;
+        for (int i=0; i< 11; i++)
+        {
+            for (int j = 0; j < 6; j++)
+            {
+                GameObject go = Instantiate(buttonBook);
+                Button btnBook = go.GetComponentInChildren<Button>();
+                btnBook.onClick.AddListener(() => { SelectBook(btnBook); });
+                Text btnBookText = go.GetComponentInChildren<Text>();
+                btnBookText.text = BIBLE_DEF.BOOK_NAME_SHORT[nBook];
+                nBook++;
+                go.transform.SetParent(panelBooks, false);
+                int x_pos = x_origin + (j * x_step);
+                int y_pos = y_origin + (i * y_step);
+                Debug.Log(string.Format("PosZ{0},{1} => {2},{3}", i, j, x_pos, y_pos));
+                go.transform.localPosition =  new Vector3(x_pos, y_pos, 0);
+            }
+        }
     }
 
     public void Button1()
@@ -434,6 +494,8 @@ public class Program : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        MakeBookButtons();
+
         DataService(DB_NAME);
 
         p_book = PlayerPrefs.GetInt(KEY_BOOK, 18);
@@ -467,9 +529,7 @@ public class Program : MonoBehaviour
     {
         if (pause)
         {
-            PlayerPrefs.SetInt(KEY_BOOK, p_book);
-            PlayerPrefs.SetInt(KEY_CHAPTER, p_chapter);
-            PlayerPrefs.SetInt(KEY_VERSE, p_verse);
+            StoreBibleData();
         }
     }
 }
