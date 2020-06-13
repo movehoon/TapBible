@@ -36,6 +36,9 @@ public class Program : MonoBehaviour
     int p_verse = 0;
     int p_word = 0;
 
+    int[] saved_chapter = new int[66];
+    int[] saved_verse = new int[66];
+
     DateTime btnBlink;
     DateTime answerBlink;
 
@@ -63,9 +66,29 @@ public class Program : MonoBehaviour
 
     void StoreBibleData()
     {
+        //Debug.Log(string.Format("StoreBibltData {0}:{1}", p_chapter, p_verse));
         PlayerPrefs.SetInt(KEY_BOOK, p_book);
-        PlayerPrefs.SetInt(KEY_CHAPTER, p_chapter);
-        PlayerPrefs.SetInt(KEY_VERSE, p_verse);
+        saved_chapter[p_book] = p_chapter;
+        saved_verse[p_book] = p_verse;
+        for (int i=0; i<66; i++)
+        {
+            PlayerPrefs.SetInt(KEY_CHAPTER+i.ToString(), saved_chapter[i]);
+            PlayerPrefs.SetInt(KEY_VERSE+i.ToString(), saved_verse[i]);
+            //Debug.Log(string.Format("StoreBibltData {0} {1}:{2}", i, saved_chapter[i], saved_verse[1]));
+        }
+    }
+
+    void LoadBibltData()
+    {
+        p_book = PlayerPrefs.GetInt(KEY_BOOK, 18);
+        for (int i=0; i<66; i++)
+        {
+            saved_chapter[i] = PlayerPrefs.GetInt(KEY_CHAPTER+i.ToString(), 0);
+            saved_verse[i] = PlayerPrefs.GetInt(KEY_VERSE+i.ToString(), 0);
+            //Debug.Log(string.Format("LoadBibltData {0} {1}:{2}", i, saved_chapter[i], saved_verse[1]));
+        }
+        p_chapter = saved_chapter[p_book];
+        p_verse = saved_verse[p_book];
     }
 
     int GetBookIndex(string book_name)
@@ -90,14 +113,18 @@ public class Program : MonoBehaviour
         string book_name = button.GetComponentInChildren<Text>().text;
         Debug.Log("SelectBook" + book_name + GetBookIndex(book_name));
         panelBooks.gameObject.SetActive(false);
+        p_book = GetBookIndex(book_name);
+        p_chapter = saved_chapter[p_book];
+        p_verse = saved_verse[p_book];
+        RefreshUI();
     }
 
     void MakeBookButtons()
     {
-        int x_origin = -240;
-        int y_origin = 540;
-        int x_step = 100;
-        int y_step = -100;
+        int x_origin = -340;
+        int y_origin = 620;
+        int x_step = 115;
+        int y_step = -115;
         Debug.Log("MakeBookButtons");
         int nBook = 0;
         for (int i=0; i< 11; i++)
@@ -113,7 +140,7 @@ public class Program : MonoBehaviour
                 go.transform.SetParent(panelBooks, false);
                 int x_pos = x_origin + (j * x_step);
                 int y_pos = y_origin + (i * y_step);
-                Debug.Log(string.Format("PosZ{0},{1} => {2},{3}", i, j, x_pos, y_pos));
+                //Debug.Log(string.Format("PosZ{0},{1} => {2},{3}", i, j, x_pos, y_pos));
                 go.transform.localPosition =  new Vector3(x_pos, y_pos, 0);
             }
         }
@@ -178,7 +205,7 @@ public class Program : MonoBehaviour
             //Debug.Log("Compare " + word + GetContent(p_book, p_chapter, p_verse));
             if (word == GetContentWord(p_book, p_chapter, p_verse, p_word))
             {
-                Debug.Log("Correct");
+                //Debug.Log("Correct");
                 if (NextWord())
                 {
                     if_answer.text += word + " ";
@@ -189,7 +216,7 @@ public class Program : MonoBehaviour
                     if_answer.text = "";
                     StartCoroutine("PlayNext");
                 }
-                RefreshButton();
+                RefreshUI();
                 return true;
             }
         }
@@ -227,6 +254,7 @@ public class Program : MonoBehaviour
             p_verse = 0;
             NextChapter();
         }
+        StoreBibleData();
     }
     void NextChapter()
     {
@@ -238,6 +266,7 @@ public class Program : MonoBehaviour
             p_chapter = 0;
             NextBook();
         }
+        StoreBibleData();
     }
     void NextBook()
     {
@@ -246,6 +275,7 @@ public class Program : MonoBehaviour
         {
             p_book = 0;
         }
+        StoreBibleData();
     }
 
     string[] Get4Words(int b, int c, int v, int w)
@@ -291,7 +321,7 @@ public class Program : MonoBehaviour
         return result;
     }
 
-    void RefreshButton()
+    void RefreshUI()
     {
         try
         {
@@ -316,7 +346,7 @@ public class Program : MonoBehaviour
             }
             for (int i = 0; i < 4; i++)
             {
-                Debug.Log(string.Format("{0} Words: {1}", i, string.Join(", ", rest_words)));
+                //Debug.Log(string.Format("{0} Words: {1}", i, string.Join(", ", rest_words)));
                 if (buttonAnswers[i].GetComponentInChildren<Text>().text == words[0])
                 {
                     rest_words.Remove(words[0]);
@@ -498,15 +528,13 @@ public class Program : MonoBehaviour
 
         DataService(DB_NAME);
 
-        p_book = PlayerPrefs.GetInt(KEY_BOOK, 18);
-        p_chapter = PlayerPrefs.GetInt(KEY_CHAPTER, 0);
-        p_verse = PlayerPrefs.GetInt(KEY_VERSE, 0);
+        LoadBibltData();
 
-        p_book = 18;
+        //p_book = 18;
         //p_chapter = 0;
         //p_verse = 0;
 
-        RefreshButton();
+        RefreshUI();
 
         //StartCoroutine("TestButton");
     }
