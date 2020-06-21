@@ -22,6 +22,7 @@ public class Program : MonoBehaviour
     public Text text_book;
     public InputField if_test;
     public InputField if_answer;
+    public Text text_process;
     public Button[] buttonAnswers;
     public Transform panelBooks;
     public GameObject buttonBook;
@@ -198,6 +199,23 @@ public class Program : MonoBehaviour
         btnBlink = DateTime.Now;
     }
 
+    string GetProcessing(string[] words, int word_index)
+    {
+        string result = "";
+        for(int i=0; i<words.Length; i++)
+        {
+            if (i == word_index)
+            {
+                result += "<b><color=#008000ff>" + words[i] + "</color></b> ";  
+            }
+            else
+            {
+                result += words[i] + " ";
+            }
+        }
+        return result;
+    }
+
     bool MatchWord(string word)
     {
         try
@@ -208,12 +226,14 @@ public class Program : MonoBehaviour
                 //Debug.Log("Correct");
                 if (NextWord())
                 {
-                    if_answer.text += word + " ";
+                    //if_answer.text += word + " ";
+                    //text_process.text += word + " ";
                     StartCoroutine("PlayCorrect");
                 }
                 else
                 {
-                    if_answer.text = "";
+                    //if_answer.text = "";
+                    //text_process.text = "";
                     StartCoroutine("PlayNext");
                 }
                 RefreshUI();
@@ -363,7 +383,8 @@ public class Program : MonoBehaviour
                     rest_words.RemoveAt(0);
                 }
             }
-            if_test.text = GetContent(p_book, p_chapter, p_verse);
+            //if_test.text = GetContent(p_book, p_chapter, p_verse);
+            text_process.text = GetProcessing(GetContentWords(p_book, p_chapter, p_verse), p_word);
         }
         catch (Exception e)
         {
