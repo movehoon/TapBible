@@ -20,8 +20,6 @@ public class Program : MonoBehaviour
     public AudioSource audioSource;
 
     public Text text_book;
-    public InputField if_test;
-    public InputField if_answer;
     public Text text_process;
     public Button[] buttonAnswers;
     public Transform panelBooks;
@@ -226,14 +224,10 @@ public class Program : MonoBehaviour
                 //Debug.Log("Correct");
                 if (NextWord())
                 {
-                    //if_answer.text += word + " ";
-                    //text_process.text += word + " ";
                     StartCoroutine("PlayCorrect");
                 }
                 else
                 {
-                    //if_answer.text = "";
-                    //text_process.text = "";
                     StartCoroutine("PlayNext");
                 }
                 RefreshUI();
@@ -383,7 +377,6 @@ public class Program : MonoBehaviour
                     rest_words.RemoveAt(0);
                 }
             }
-            //if_test.text = GetContent(p_book, p_chapter, p_verse);
             text_process.text = GetProcessing(GetContentWords(p_book, p_chapter, p_verse), p_word);
         }
         catch (Exception e)
@@ -415,27 +408,6 @@ public class Program : MonoBehaviour
             }
         }
     }
-
-    //void LoadDatabase(string DatabaseName)
-    //{
-
-    //    var dbPath = string.Format(@"Assets/StreamingAssets/{0}", DatabaseName);
-    //    if (!File.Exists(dbPath))
-    //    {
-    //        dbPath = string.Format("{0}/{1}", Application.persistentDataPath, DatabaseName);
-    //    }
-    //    //string dbPath = "file://" + Application.streamingAssetsPath + "/" + DatabaseName;
-    //    try
-    //    {
-    //        _connection = new SQLiteConnection(dbPath, SQLiteOpenFlags.ReadOnly);
-    //        Debug.Log("Final PATH: " + dbPath);
-    //        Debug.Log("Connection: " + _connection.ToString());
-    //    }
-    //    catch (Exception e)
-    //    {
-    //        Debug.Log(e);
-    //    }
-    //}
 
     public void DataService(string DatabaseName)
     {
