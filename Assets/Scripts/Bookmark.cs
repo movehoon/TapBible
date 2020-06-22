@@ -12,7 +12,7 @@ public class Bookmark
     public Bookmark()
     {
         version = 1;
-        p_book = 0;
+        p_book = 18;
         saved_chapter = new int[BIBLE_DEF.BOOK_MAX];
         saved_verse = new int[BIBLE_DEF.BOOK_MAX];
         read_count = new int[BIBLE_DEF.BOOK_MAX];
