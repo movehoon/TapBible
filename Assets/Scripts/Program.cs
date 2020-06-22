@@ -1,5 +1,4 @@
-﻿using SQLite4Unity3d;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,9 +12,7 @@ public class Program : MonoBehaviour
     const string KEY_BOOK = "KEY_BOOK";
     const string KEY_CHAPTER = "KEY_CHAPTER";
     const string KEY_VERSE = "KEY_VERSE";
-
-    const string DB_NAME = "korHRV.db";
-    const string TABLE_NAME = "bible_korHRV";
+    const string KEY_BOOKMARK = "KEY_BOOKMARK";
 
     public AudioSource audioSource;
 
@@ -25,8 +22,8 @@ public class Program : MonoBehaviour
     public Transform panelBooks;
     public GameObject buttonBook;
 
-    //Bible bible;
-    private SQLiteConnection _connection;
+    public BibleManager bm;
+    Bookmark bookmark = new Bookmark();
 
     int[] count = new int[50];
 
@@ -35,8 +32,8 @@ public class Program : MonoBehaviour
     int p_verse = 0;
     int p_word = 0;
 
-    int[] saved_chapter = new int[66];
-    int[] saved_verse = new int[66];
+    //int[] saved_chapter = new int[66];
+    //int[] saved_verse = new int[66];
 
     DateTime btnBlink;
     DateTime answerBlink;
@@ -65,40 +62,64 @@ public class Program : MonoBehaviour
 
     void StoreBibleData()
     {
-        //Debug.Log(string.Format("StoreBibltData {0}:{1}", p_chapter, p_verse));
-        PlayerPrefs.SetInt(KEY_BOOK, p_book);
-        saved_chapter[p_book] = p_chapter;
-        saved_verse[p_book] = p_verse;
-        for (int i=0; i<66; i++)
-        {
-            PlayerPrefs.SetInt(KEY_CHAPTER+i.ToString(), saved_chapter[i]);
-            PlayerPrefs.SetInt(KEY_VERSE+i.ToString(), saved_verse[i]);
-            //Debug.Log(string.Format("StoreBibltData {0} {1}:{2}", i, saved_chapter[i], saved_verse[1]));
-        }
+        bookmark.p_book = p_book;
+        bookmark.saved_chapter[p_book] = p_chapter;
+        bookmark.saved_verse[p_book] = p_verse;
+        string save_pointer = JsonUtility.ToJson(bookmark);
+        PlayerPrefs.SetString(KEY_BOOKMARK, save_pointer);
+        Debug.Log("StoreBiblePointer:" + save_pointer);
     }
 
-    void LoadBibltData()
+    void LoadBibleData()
     {
-        p_book = PlayerPrefs.GetInt(KEY_BOOK, 18);
-        for (int i=0; i<66; i++)
+        string saved_pointer = PlayerPrefs.GetString(KEY_BOOKMARK);
+        Debug.Log("LoadBiblePointer:" + saved_pointer);
+        bookmark = JsonUtility.FromJson<Bookmark>(saved_pointer);
+        if (bookmark == null)
         {
-            saved_chapter[i] = PlayerPrefs.GetInt(KEY_CHAPTER+i.ToString(), 0);
-            saved_verse[i] = PlayerPrefs.GetInt(KEY_VERSE+i.ToString(), 0);
-            //Debug.Log(string.Format("LoadBibltData {0} {1}:{2}", i, saved_chapter[i], saved_verse[1]));
+            bookmark = new Bookmark();
         }
-        p_chapter = saved_chapter[p_book];
-        p_verse = saved_verse[p_book];
+        p_book = bookmark.p_book;
+        p_chapter = bookmark.saved_chapter[p_book];
+        p_verse = bookmark.saved_verse[p_book];
     }
+
+    //void StoreBibleData()
+    //{
+    //    //Debug.Log(string.Format("StoreBibltData {0}:{1}", p_chapter, p_verse));
+    //    PlayerPrefs.SetInt(KEY_BOOK, p_book);
+    //    saved_chapter[p_book] = p_chapter;
+    //    saved_verse[p_book] = p_verse;
+    //    for (int i=0; i<66; i++)
+    //    {
+    //        PlayerPrefs.SetInt(KEY_CHAPTER+i.ToString(), saved_chapter[i]);
+    //        PlayerPrefs.SetInt(KEY_VERSE+i.ToString(), saved_verse[i]);
+    //        //Debug.Log(string.Format("StoreBibltData {0} {1}:{2}", i, saved_chapter[i], saved_verse[1]));
+    //    }
+    //}
+
+    //void LoadBibltData()
+    //{
+    //    p_book = PlayerPrefs.GetInt(KEY_BOOK, 18);
+    //    for (int i=0; i<66; i++)
+    //    {
+    //        saved_chapter[i] = PlayerPrefs.GetInt(KEY_CHAPTER+i.ToString(), 0);
+    //        saved_verse[i] = PlayerPrefs.GetInt(KEY_VERSE+i.ToString(), 0);
+    //        //Debug.Log(string.Format("LoadBibltData {0} {1}:{2}", i, saved_chapter[i], saved_verse[1]));
+    //    }
+    //    p_chapter = saved_chapter[p_book];
+    //    p_verse = saved_verse[p_book];
+    //}
 
     int GetBookIndex(string book_name)
     {
-        for (int i=0; i<66; i++)
+        for (int i=0; i<BIBLE_DEF.BOOK_MAX; i++)
         {
-            if (BIBLE_DEF.BOOK_NAME[i] == book_name)
+            if (book_name.Contains(BIBLE_DEF.BOOK_NAME[i]))
             {
                 return i;
             }
-            if (BIBLE_DEF.BOOK_NAME_SHORT[i] == book_name)
+            if (book_name.Contains(BIBLE_DEF.BOOK_NAME_SHORT[i]))
             {
                 return i;
             }
@@ -113,18 +134,18 @@ public class Program : MonoBehaviour
         Debug.Log("SelectBook" + book_name + GetBookIndex(book_name));
         panelBooks.gameObject.SetActive(false);
         p_book = GetBookIndex(book_name);
-        p_chapter = saved_chapter[p_book];
-        p_verse = saved_verse[p_book];
+        p_chapter = bookmark.saved_chapter[p_book];
+        p_verse = bookmark.saved_verse[p_book];
         RefreshUI();
     }
 
-    void MakeBookButtons()
+    void CreateBookButtons()
     {
         int x_origin = -340;
         int y_origin = 620;
         int x_step = 115;
         int y_step = -115;
-        Debug.Log("MakeBookButtons");
+        Debug.Log("CreateBookButtons");
         int nBook = 0;
         for (int i=0; i< 11; i++)
         {
@@ -134,7 +155,13 @@ public class Program : MonoBehaviour
                 Button btnBook = go.GetComponentInChildren<Button>();
                 btnBook.onClick.AddListener(() => { SelectBook(btnBook); });
                 Text btnBookText = go.GetComponentInChildren<Text>();
-                btnBookText.text = BIBLE_DEF.BOOK_NAME_SHORT[nBook];
+                if (nBook < 39) {
+                    btnBookText.text = "<color=#0000aaff>" + BIBLE_DEF.BOOK_NAME_SHORT[nBook] + "</color>";
+                }
+                else
+                {
+                    btnBookText.text = "<color=#aa0000ff>" + BIBLE_DEF.BOOK_NAME_SHORT[nBook] + "</color>";
+                }
                 nBook++;
                 go.transform.SetParent(panelBooks, false);
                 int x_pos = x_origin + (j * x_step);
@@ -219,7 +246,7 @@ public class Program : MonoBehaviour
         try
         {
             //Debug.Log("Compare " + word + GetContent(p_book, p_chapter, p_verse));
-            if (word == GetContentWord(p_book, p_chapter, p_verse, p_word))
+            if (word == bm.GetContentWord(p_book, p_chapter, p_verse, p_word))
             {
                 //Debug.Log("Correct");
                 if (NextWord())
@@ -251,7 +278,7 @@ public class Program : MonoBehaviour
         //Debug.Log("V_Count:" + bible.books[p_book].chapters[p_chapter].verses.Count);
         //Debug.Log("W_Count:" + bible.books[p_book].chapters[p_chapter].verses[p_verse].words.Length);
         //Debug.Log("B: " + p_book + ", C: " + p_chapter + ", V: " + p_verse + ", W: " + p_word);
-        if (p_word >= GetContentWords(p_book, p_chapter, p_verse).Length)
+        if (p_word >= bm.GetContentWords(p_book, p_chapter, p_verse).Length)
         {
             p_word = 0;
             NextVerse();
@@ -263,7 +290,7 @@ public class Program : MonoBehaviour
     {
         Debug.Log("NextVerse");
         p_verse = p_verse + 1;
-        if (GetContent(p_book, p_chapter, p_verse) == "")
+        if (bm.GetContent(p_book, p_chapter, p_verse) == "")
         {
             p_verse = 0;
             NextChapter();
@@ -274,10 +301,11 @@ public class Program : MonoBehaviour
     {
         Debug.Log("NextChapter");
         p_chapter = p_chapter + 1;
-        if (GetContent(p_book, p_chapter, p_verse) == "")
+        if (bm.GetContent(p_book, p_chapter, p_verse) == "")
         {
             // NextBook
             p_chapter = 0;
+            bookmark.read_count[p_book]++;
             NextBook();
         }
         StoreBibleData();
@@ -285,7 +313,7 @@ public class Program : MonoBehaviour
     void NextBook()
     {
         p_book = p_book + 1;
-        if (GetContent(p_book, p_chapter, p_verse) == "")
+        if (bm.GetContent(p_book, p_chapter, p_verse) == "")
         {
             p_book = 0;
         }
@@ -306,31 +334,31 @@ public class Program : MonoBehaviour
     string GetNextNthWord(int b, int c, int v, int w, int n)
     {
         string result = "";
-        if (w+n < GetContentWords(b, c, v).Length)
+        if (w+n < bm.GetContentWords(b, c, v).Length)
         {
-            result = GetContentWords(b, c, v)[w + n];
+            result = bm.GetContentWords(b, c, v)[w + n];
         }
         else
         {
-            w = (w + n) - GetContentWords(b, c, v).Length;
+            w = (w + n) - bm.GetContentWords(b, c, v).Length;
             v++;
-            if (GetContent(b, c, v) == "")
+            if (bm.GetContent(b, c, v) == "")
             {
-                v = 1;
+                v = 0;
                 c++;
-                if (GetContent(b, c, v) == "")
+                if (bm.GetContent(b, c, v) == "")
                 {
-                    c = 1;
+                    c = 0;
                     b++;
                     if (b > 66)
                     {
-                        b = 1;
-                        c = 1;
-                        v = 1;
+                        b = 0;
+                        c = 0;
+                        v = 0;
                     }
                 }
             }
-            result = GetContentWord(b, c, v, w);
+            result = bm.GetContentWord(b, c, v, w);
         }
         return result;
     }
@@ -377,7 +405,7 @@ public class Program : MonoBehaviour
                     rest_words.RemoveAt(0);
                 }
             }
-            text_process.text = GetProcessing(GetContentWords(p_book, p_chapter, p_verse), p_word);
+            text_process.text = GetProcessing(bm.GetContentWords(p_book, p_chapter, p_verse), p_word);
         }
         catch (Exception e)
         {
@@ -409,119 +437,12 @@ public class Program : MonoBehaviour
         }
     }
 
-    public void DataService(string DatabaseName)
-    {
-
-#if UNITY_EDITOR
-        var dbPath = string.Format(@"Assets/StreamingAssets/{0}", DatabaseName);
-#else
-        // check if file exists in Application.persistentDataPath
-        var filepath = string.Format("{0}/{1}", Application.persistentDataPath, DatabaseName);
-
-        if (!File.Exists(filepath))
-        {
-            Debug.Log("Database not in Persistent path");
-            // if it doesn't ->
-            // open StreamingAssets directory and load the db ->
-
-#if UNITY_ANDROID
-            var loadDb = new WWW("jar:file://" + Application.dataPath + "!/assets/" + DatabaseName);  // this is the path to your StreamingAssets in android
-            while (!loadDb.isDone) { }  // CAREFUL here, for safety reasons you shouldn't let this while loop unattended, place a timer and error check
-            // then save to Application.persistentDataPath
-            File.WriteAllBytes(filepath, loadDb.bytes);
-#elif UNITY_IOS
-                 var loadDb = Application.dataPath + "/Raw/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
-                // then save to Application.persistentDataPath
-                File.Copy(loadDb, filepath);
-#elif UNITY_WP8
-                var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
-                // then save to Application.persistentDataPath
-                File.Copy(loadDb, filepath);
-
-#elif UNITY_WINRT
-        var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
-        // then save to Application.persistentDataPath
-        File.Copy(loadDb, filepath);
-        
-#elif UNITY_STANDALONE_OSX
-        var loadDb = Application.dataPath + "/Resources/Data/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
-        // then save to Application.persistentDataPath
-        File.Copy(loadDb, filepath);
-#else
-    var loadDb = Application.dataPath + "/StreamingAssets/" + DatabaseName;  // this is the path to your StreamingAssets in iOS
-    // then save to Application.persistentDataPath
-    File.Copy(loadDb, filepath);
-
-#endif
-
-            Debug.Log("Database written");
-        }
-
-        var dbPath = filepath;
-#endif
-        _connection = new SQLiteConnection(dbPath, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
-        Debug.Log("Final PATH: " + dbPath);
-
-    }
-
-
-    public class Bible_korHRV
-    {
-        [PrimaryKey, AutoIncrement]
-        public int book { get; set; }
-        public int chapter { get; set; }
-        public int verse { get; set; }
-        public string content { get; set; }
-    }
-
-
-    string GetContent(int nBook, int nChapter, int nVerse)
-    {
-        nBook += 1;
-        nChapter += 1;
-        nVerse += 1;
-        string result = "";
-        try
-        {
-            //Debug.Log(string.Format("GetContent: {0} {1} {2}", nBook, nChapter, nVerse));
-            Bible_korHRV b = _connection.Table<Bible_korHRV>().Where(x => x.book == nBook && x.chapter == nChapter && x.verse == nVerse).First();
-            result = b.content;
-        }
-        catch(Exception e)
-        {
-            Debug.Log(e);
-        }
-        return result;
-    }
-
-    string[] GetContentWords(int nBook, int nChapter, int nVerse)
-    {
-        string content = GetContent(nBook, nChapter, nVerse);
-        if (content.Length > 0)
-        {
-            return content.Split(' ');
-        }
-        return new string[] { "", "", "", "" };
-    }
-
-    string GetContentWord(int nBook, int nChapter, int nVerse, int nWord)
-    {
-        string content = GetContent(nBook, nChapter, nVerse);
-        if (content.Length > 0)
-        {
-            return content.Split(' ')[nWord];
-        }
-        return "";
-    }
-
     // Start is called before the first frame update
     void Start()
     {
-        MakeBookButtons();
+        CreateBookButtons();
 
-        DataService(DB_NAME);
-
-        LoadBibltData();
+        LoadBibleData();
 
         //p_book = 18;
         //p_chapter = 0;

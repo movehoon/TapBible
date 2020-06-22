@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BIBLE_DEF : MonoBehaviour
 {
-    readonly public int BOOK_MAX = 66;
+    public static readonly int BOOK_MAX = 66;
     public static readonly string[] BOOK_NAME = new string[]
     {
         "창세기",
