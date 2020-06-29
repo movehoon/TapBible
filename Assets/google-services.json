@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "990503357582",
+    "firebase_url": "https://tapbible.firebaseio.com",
+    "project_id": "tapbible",
+    "storage_bucket": "tapbible.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:990503357582:android:179fffb6f21dccd3d48ddf",
+        "android_client_info": {
+          "package_name": "com.onairsoft.tapbible"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "990503357582-4v4el52usi0s087b1r39eflhsnnh65k1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.onairsoft.tapbible",
+            "certificate_hash": "2e01850b32754b34eabe268c46e5a0a0878b7efc"
+          }
+        },
+        {
+          "client_id": "990503357582-pkp49i6o86hlui8b8oii9dscgplhr673.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZ_AwAmCUmIyH3lJ82SU-untzarAL-7ME"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "990503357582-pkp49i6o86hlui8b8oii9dscgplhr673.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "990503357582-qof17sb1cucoq8geqphidi76jsu0jipc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.onairsoft.tapbible"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

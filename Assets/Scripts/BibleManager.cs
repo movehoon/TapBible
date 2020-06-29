@@ -117,17 +117,8 @@ public class BibleManager : MonoBehaviour
 
     }
 
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
         DataService(DB_NAME);
-
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

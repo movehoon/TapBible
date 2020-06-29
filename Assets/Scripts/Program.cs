@@ -23,7 +23,14 @@ public class Program : MonoBehaviour
     public GameObject buttonBook;
 
     public BibleManager bm;
+    public FirebaseManager fm;
     Bookmark bookmark = new Bookmark();
+
+    public InputField IF_Login_id;
+    public InputField IF_Login_pw;
+    public InputField IF_Join_id;
+    public InputField IF_Join_pw;
+    public InputField IF_Join_pw_confirm;
 
     int[] count = new int[50];
 
@@ -60,6 +67,35 @@ public class Program : MonoBehaviour
         yield return null;
     }
 
+    public void JoinByEmail()
+    {
+        if (IF_Join_id.text.IndexOf('@') <= 0)
+        {
+            IF_Join_id.Select();
+        }
+        else
+        {
+            if (IF_Join_pw.text.Equals(IF_Join_pw_confirm.text))
+            {
+                fm.JoinByEmail(IF_Join_id.text, IF_Join_pw.text);
+            }
+            else
+            {
+                IF_Join_pw.Select();
+            }
+        }
+    }
+
+    public void LoginByEmail()
+    {
+        fm.LoginByEmail(IF_Login_id.text, IF_Login_pw.text);
+    }
+
+    public void Logout()
+    {
+
+    }
+
     void StoreBibleData()
     {
         bookmark.p_book = p_book;
@@ -67,17 +103,30 @@ public class Program : MonoBehaviour
         bookmark.saved_verse[p_book] = p_verse;
         string save_pointer = JsonUtility.ToJson(bookmark);
         PlayerPrefs.SetString(KEY_BOOKMARK, save_pointer);
+        fm.SetBookmark(save_pointer);
         Debug.Log("StoreBiblePointer:" + save_pointer);
     }
 
     void LoadBibleData()
     {
-        string saved_pointer = PlayerPrefs.GetString(KEY_BOOKMARK);
-        Debug.Log("LoadBiblePointer:" + saved_pointer);
-        bookmark = JsonUtility.FromJson<Bookmark>(saved_pointer);
-        if (bookmark == null)
+        try
         {
-            bookmark = new Bookmark();
+            string saved_pointer = PlayerPrefs.GetString(KEY_BOOKMARK);
+            saved_pointer = fm.GetBookmark();
+            Debug.Log("LoadBiblePointer:" + saved_pointer);
+            bookmark = JsonUtility.FromJson<Bookmark>(saved_pointer);
+            if (bookmark == null)
+            {
+                bookmark = new Bookmark();
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(ex.ToString());
+            if (bookmark == null)
+            {
+                bookmark = new Bookmark();
+            }
         }
         p_book = bookmark.p_book;
         p_chapter = bookmark.saved_chapter[p_book];
