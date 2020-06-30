@@ -42,6 +42,13 @@ public class Program : MonoBehaviour
     //int[] saved_chapter = new int[66];
     //int[] saved_verse = new int[66];
 
+    bool req_ui_f;
+    public void ReqUpdateUI()
+    {
+        Debug.Log("ReqUpdateUI");
+        req_ui_f = true;
+    }
+
     DateTime btnBlink;
     DateTime answerBlink;
 
@@ -105,6 +112,22 @@ public class Program : MonoBehaviour
         PlayerPrefs.SetString(KEY_BOOKMARK, save_pointer);
         fm.SetBookmark(save_pointer);
         Debug.Log("StoreBiblePointer:" + save_pointer);
+//        LoadBibleData();
+    }
+
+    public void LoadBookmarkFromJsonString(string bookmark_json)
+    {
+        Debug.Log("LoadBookmarkFromJsonString: " + bookmark_json);
+        bookmark = JsonUtility.FromJson<Bookmark>(bookmark_json);
+        if (bookmark == null)
+        {
+            Debug.Log("bookmark is null");
+            bookmark = new Bookmark();
+        }
+        p_book = bookmark.p_book;
+        p_chapter = bookmark.saved_chapter[p_book];
+        p_verse = bookmark.saved_verse[p_book];
+        Debug.Log("Book: " + bookmark.p_book.ToString());
     }
 
     void LoadBibleData()
@@ -412,8 +435,9 @@ public class Program : MonoBehaviour
         return result;
     }
 
-    void RefreshUI()
+    public void RefreshUI()
     {
+        Debug.Log("RefreshUI");
         try
         {
             text_book.text = BIBLE_DEF.BOOK_NAME[p_book] + " " + (p_chapter + 1).ToString() + ":" + (p_verse + 1).ToString();
@@ -491,13 +515,13 @@ public class Program : MonoBehaviour
     {
         CreateBookButtons();
 
-        LoadBibleData();
+//        LoadBibleData();
 
         //p_book = 18;
         //p_chapter = 0;
         //p_verse = 0;
 
-        RefreshUI();
+        //RefreshUI();
 
         //StartCoroutine("TestButton");
     }
@@ -513,6 +537,11 @@ public class Program : MonoBehaviour
             {
                 buttonAnswers[i].GetComponentInChildren<Image>().color = Color.white;
             }
+        }
+        if (req_ui_f)
+        {
+            req_ui_f = false;
+            RefreshUI();
         }
     }
 
