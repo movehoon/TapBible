@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
-//#if !UNITY_EDITOR
-//#endif
 
 public class Program : MonoBehaviour
 {
@@ -13,6 +11,7 @@ public class Program : MonoBehaviour
     const string KEY_CHAPTER = "KEY_CHAPTER";
     const string KEY_VERSE = "KEY_VERSE";
     const string KEY_BOOKMARK = "KEY_BOOKMARK";
+    const string KEY_LOGINTYPE = "KEY_LOGINTYPE";
 
     public AudioSource audioSource;
 
@@ -32,12 +31,21 @@ public class Program : MonoBehaviour
     public InputField IF_Join_pw;
     public InputField IF_Join_pw_confirm;
 
+    public GameObject Panel_Profile;
+    public GameObject Panel_Loading;
+
+    public GameObject Popup;
+    public Text PopupTitle;
+    public Text PopupMessage;
+
     int[] count = new int[50];
 
     int p_book = 0;
     int p_chapter = 0;
     int p_verse = 0;
     int p_word = 0;
+
+    int login_type;
 
     //int[] saved_chapter = new int[66];
     //int[] saved_verse = new int[66];
@@ -47,6 +55,13 @@ public class Program : MonoBehaviour
     {
         Debug.Log("ReqUpdateUI");
         req_ui_f = true;
+    }
+
+    public void PopupShow(string title, string message)
+    {
+        PopupTitle.text = title;
+        PopupMessage.text = message;
+        Popup.SetActive(true);
     }
 
     DateTime btnBlink;
@@ -100,7 +115,19 @@ public class Program : MonoBehaviour
 
     public void Logout()
     {
+        fm.Logout();
+        login_type = 0;
+        StoreLoginType(login_type);
+    }
 
+    public void StoreLoginType(int login_type)
+    {
+        PlayerPrefs.SetInt(KEY_LOGINTYPE, login_type);
+    }
+
+    int LoadLoginType()
+    {
+        return PlayerPrefs.GetInt(KEY_LOGINTYPE);
     }
 
     void StoreBibleData()
@@ -109,8 +136,14 @@ public class Program : MonoBehaviour
         bookmark.saved_chapter[p_book] = p_chapter;
         bookmark.saved_verse[p_book] = p_verse;
         string save_pointer = JsonUtility.ToJson(bookmark);
-        PlayerPrefs.SetString(KEY_BOOKMARK, save_pointer);
-        fm.SetBookmark(save_pointer);
+        if (login_type==0)
+        {
+            PlayerPrefs.SetString(KEY_BOOKMARK, save_pointer);
+        }
+        else if (login_type==1)
+        {
+            fm.SetBookmark(save_pointer);
+        }
         Debug.Log("StoreBiblePointer:" + save_pointer);
 //        LoadBibleData();
     }
@@ -118,24 +151,34 @@ public class Program : MonoBehaviour
     public void LoadBookmarkFromJsonString(string bookmark_json)
     {
         Debug.Log("LoadBookmarkFromJsonString: " + bookmark_json);
-        bookmark = JsonUtility.FromJson<Bookmark>(bookmark_json);
-        if (bookmark == null)
+        if (login_type==1)
         {
-            Debug.Log("bookmark is null");
-            bookmark = new Bookmark();
+            bookmark = JsonUtility.FromJson<Bookmark>(bookmark_json);
+            if (bookmark == null)
+            {
+                Debug.Log("bookmark is null");
+                bookmark = new Bookmark();
+            }
+            p_book = bookmark.p_book;
+            p_chapter = bookmark.saved_chapter[p_book];
+            p_verse = bookmark.saved_verse[p_book];
+            Debug.Log("Book: " + bookmark.p_book.ToString());
         }
-        p_book = bookmark.p_book;
-        p_chapter = bookmark.saved_chapter[p_book];
-        p_verse = bookmark.saved_verse[p_book];
-        Debug.Log("Book: " + bookmark.p_book.ToString());
     }
 
     void LoadBibleData()
     {
         try
         {
-            string saved_pointer = PlayerPrefs.GetString(KEY_BOOKMARK);
-            saved_pointer = fm.GetBookmark();
+            string saved_pointer = "";
+            if (login_type == 0)
+            {
+                saved_pointer = PlayerPrefs.GetString(KEY_BOOKMARK);
+            }
+            else if (login_type==1)
+            {
+                saved_pointer = fm.GetBookmark();
+            }
             Debug.Log("LoadBiblePointer:" + saved_pointer);
             bookmark = JsonUtility.FromJson<Bookmark>(saved_pointer);
             if (bookmark == null)
@@ -510,20 +553,35 @@ public class Program : MonoBehaviour
         }
     }
 
+    private void Awake()
+    {
+        login_type = LoadLoginType();
+        if (login_type == 0)
+        {
+            LoadBibleData();
+        }
+    }
+
     // Start is called before the first frame update
     void Start()
     {
         CreateBookButtons();
 
-//        LoadBibleData();
-
         //p_book = 18;
         //p_chapter = 0;
         //p_verse = 0;
 
-        //RefreshUI();
+        if (login_type==0)
+        {
+            RefreshUI();
+            Panel_Loading.SetActive(false);
+        }
 
         //StartCoroutine("TestButton");
+        if (fm.UserID() == "")
+        {
+            PopupShow("LOGIN ERROR", "Can't login");
+        }
     }
 
     // Update is called once per frame
@@ -542,6 +600,7 @@ public class Program : MonoBehaviour
         {
             req_ui_f = false;
             RefreshUI();
+            Panel_Loading.SetActive(false);
         }
     }
 

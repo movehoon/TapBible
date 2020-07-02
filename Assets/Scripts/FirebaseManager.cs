@@ -15,6 +15,15 @@ public class FirebaseManager : MonoBehaviour
 
     bool req_bookmark_f = true;
 
+    public string UserID()
+    {
+        if (user != null)
+        {
+            return user.UserId;
+        }
+        return "";
+    }
+
     public string GetBookmark()
     {
         Debug.Log("GetBookmark");
@@ -96,6 +105,8 @@ public class FirebaseManager : MonoBehaviour
             Firebase.Auth.FirebaseUser newUser = task.Result;
             Debug.LogFormat("User signed in successfully: {0} ({1})",
                 newUser.DisplayName, newUser.UserId);
+
+            program.StoreLoginType(1);
         });
     }
 
@@ -126,12 +137,6 @@ public class FirebaseManager : MonoBehaviour
     }
     private void Awake()
     {
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
-        Debug.Log("FirebaseManager:Start");
-
         auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
         InitializeFirebase();
 
@@ -159,6 +164,23 @@ public class FirebaseManager : MonoBehaviour
                 // Firebase Unity SDK is not safe to use here.
             }
         });
+    }
+    // Start is called before the first frame update
+    void Start()
+    {
+        Debug.Log("FirebaseManager:Start");
+
+        if (req_bookmark_f)
+        {
+            if (user != null)
+            {
+                if (reference != null)
+                {
+                    req_bookmark_f = false;
+                    GetBookmark();
+                }
+            }
+        }
     }
 
     // Update is called once per frame
