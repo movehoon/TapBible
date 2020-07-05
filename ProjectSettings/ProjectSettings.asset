@@ -250,8 +250,8 @@ PlayerSettings:
   AndroidTargetArchitectures: 1
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: user.keystore
-  AndroidKeyaliasName: 
+  AndroidKeystoreName: C:/Users/moveh/Documents/GitHub/TapBible/user.keystore
+  AndroidKeyaliasName: firebase
   AndroidBuildApkPerCpuArchitecture: 0
   AndroidTVCompatibility: 1
   AndroidIsGame: 1

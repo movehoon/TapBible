@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "990503357582-nbsod37t4trjt7f1125ii4evvr1p9ajn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.onairsoft.tapbible",
+            "certificate_hash": "7750bc611cbbd420e110a7921fca5e6bc7f5f25f"
+          }
+        },
+        {
           "client_id": "990503357582-4v4el52usi0s087b1r39eflhsnnh65k1.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

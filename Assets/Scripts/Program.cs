@@ -89,6 +89,11 @@ public class Program : MonoBehaviour
         yield return null;
     }
 
+    public void LoginGoogleAccount()
+    {
+        fm.LoginGoogleAccount();
+    }
+
     public void JoinByEmail()
     {
         if (IF_Join_id.text.IndexOf('@') <= 0)
